@@ -89,4 +89,4 @@ adv_examples = random_plus_fgsm(clean_images=clean_images, true_labels=true_labe
 ```
 
 
-## The implementation of adverarial training
+## The implementation of adversarial training
