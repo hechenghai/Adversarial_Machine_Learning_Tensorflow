@@ -76,6 +76,7 @@ class RandomPlusFgsm(AdversarialAttack):
 You initialize the attack by passing the `model` which is attacked and the hyperparameters of the attack `eps` (maximum perturbation) and `alpha` (step size):
 
 ```python
+# eps and alpha are float numbers - model is instance of tf.keras.Model
 random_plus_fgsm = RandomPlusFgsm(model=model, eps=esp, alpha=alpha)
 ```
 
