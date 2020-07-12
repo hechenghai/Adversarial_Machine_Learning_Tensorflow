@@ -13,6 +13,17 @@ The jupyter notbook `demo.ipynb` serves both as a tutorial on how to use the `ad
 - Random Plus FGSM ([Fast Is Better Than Free: Revisiting Adversarial Training - Rice and Wong et al.](https://arxiv.org/pdf/2001.03994.pdf))
 
 ## The implementation of the adversarial attacks
+Each adversarial attack is implemented as subclass of the class `AdversarialAttack`.
+
+```Python
+class AdversarialAttack:
+    def __init__(self, model, eps):
+        self.loss_obj = tf.keras.losses.SparseCategoricalCrossentropy()  # Loss that is used for adversarial attack
+        self.model = model
+        self.eps = eps  # Threat radius of adversarial attack
+        self.specifics = None
+        self.name = None
+```
 
 
 ## The implementation of adverarial training
