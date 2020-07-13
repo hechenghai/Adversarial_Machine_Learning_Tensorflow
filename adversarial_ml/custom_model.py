@@ -6,46 +6,62 @@ class CustomModel(tf.keras.Model):
 
     def __init__(self, inputs, outputs, adv_training_with=None, **kargs):
         """
-        inputs: inputs for buidling tf.keras.Model
-        outputs: outputs for building tf.keras.Model
-        adv_training_with: None or dictionary with items: ("Attack", Adversarial Attack Class),
+
+        :param inputs: input layer as specified in functional API of tf.keras.Model
+        :param outputs: chained layers as specified in functional API of tf.keras.Model
+        :param adv_training_with: None or dictionary with items: ("Attack", Adversarial Attack Class),
         ("attack kwargs", dictionary with all kwargs for call of instance of Adversarial Attack Class
         except for model which is set to self later), ("num adv", number of adversarial examples in
         training batch)
+        :param kargs: keyword arguments passed to base class tf.keras.Model
         """
-
+        # Specify forward pass by passing inputs and outputs
         super(CustomModel, self).__init__(inputs=inputs, outputs=outputs, **kargs)
-        # Training information (set to string in __init__)
-        self.training_info = None
 
-        # Adversarial training specifics
+        self.training_info = None      # Training information (set to string in __init__)
+
         self.adv_training_with = adv_training_with
 
+        # Check if adversarial training is used
         if self.adv_training_with != None:
+            # Get adversarial attack for training
+            Attack = self.adv_training_with["attack"]
+            # Asssert Attack is implemented attack from adversarial_attacks.py module
             Adv_attacks = [attacks.Fgsm, attacks.OneStepLeastLikely,
                            attacks.RandomPlusFgsm, attacks.BasicIter,
                            attacks.IterativeLeastLikely]
-            Attack = self.adv_training_with["attack"]
             assert Attack in Adv_attacks
+            # Get hyperparameters of adversarial attack for trainining
             attack_kwargs = adv_training_with["attack kwargs"]
+            # Initialize adversarial attack that can generate adversarial examples for training batch
             self.generate_adv_examples = Attack(model=self, **attack_kwargs)
-            self.training_info = "adversarially trained with " + \
-                                 self.generate_adv_examples.specifics
+            # Get number of adversarial examples for training batch
+            self.num_adv_examples = self.adv_training_with["num adv"]
+            # Training info: with adversarial training
+            self.training_info = " adversarially trained with " + \
+                                 self.generate_adv_examples.specifics + \
+                                 " - k: {}".format(self.num_adv_examples)
+
         else:
-            self.training_info = "trained without adversarial examles"
+            # Training info: Without adversarial training
+            self.training_info = " trained without adversarial examples"
 
     @tf.function
     def train_step(self, data):
+        """
+        data
+        :param data: x,y = data has to unpack into batch of images x and corresponding labels y
+        :return: dictionary of metric values by metric names
+        """
         # Unpack images x and labels y
         x, y = data
 
+        # If adversarial training is used get adversarial examples for training batch
         if self.adv_training_with != None:
-            # Get number of adversarial images for training batch
-            k = self.adv_training_with["num adv"]
             # Get adversarial examples
-            adv_x = self.generate_adv_examples(x[:k], y[:k])
+            adv_x = self.generate_adv_examples(x[:self.num_adv_examples], y[:self.num_adv_examples])
             # Get clean images
-            clean_x = x[k:]
+            clean_x = x[self.num_adv_examples:]
             # Make new traininig batch
             x = tf.concat([adv_x, clean_x], axis=0)
 
@@ -76,7 +92,7 @@ class CustomModel(tf.keras.Model):
 
         # Get attack parameters
         attack_params = [{"model": self, "eps": eps},  # Fgsm kwargs
-                         {"model": self, "eps": eps, "alpha": 1.25 * eps},  # Random Plus Fgsm kwargs
+                         {"model": self, "eps": eps, "alpha": eps},  # Random Plus Fgsm kwargs
                          {"model": self, "eps": eps, "alpha": eps / 40, "num_iter": 40},  # Basic Iter kwargs
                          {"model": self, "eps": eps, "alpha": eps / 40, "num_iter": 40},  # IterativeLeastLikely kwargs
                          {"model": self, "eps": eps}]  # OneStepLeastLikely kwargs
@@ -92,7 +108,7 @@ class CustomModel(tf.keras.Model):
         num_images = test_labels.shape[0]
 
         # Test adversarial robustnes
-        print("Test adversarial robustness for model trained" + self.training_info)
+        print("Test adversarial robustness for model that was" + self.training_info)
         for attack, attack_input in zip(attack_list, attack_inputs):
             adv_examples = attack(*attack_input)
             pred = self(adv_examples)
