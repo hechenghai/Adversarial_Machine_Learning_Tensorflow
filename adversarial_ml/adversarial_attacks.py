@@ -1,4 +1,5 @@
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 class AdversarialAttack:
     def __init__(self, model, eps):
@@ -210,3 +211,72 @@ class RandomPlusFgsm(AdversarialAttack):
         X = tf.clip_by_value(X, 0, 1)
         # Return adversarial examples
         return X
+
+
+def attack_visual_demo(model, Attack, attack_kwargs, images, labels):
+    """ Demo of adversarial attack on 20 images, visualizes adversarial robustness on 20 images
+    :param model: tf,keras.Model
+    :param Attack: type attacks.AdversarialAttack
+    :param attack_kwargs: dicitonary - keyword arguments to call of instance of Attack
+    :param images: tf.Tensor - shape (20, h, w, c)
+    :param labels: tf.Tensor - shape (20,)
+    :return Nothing
+    """
+    assert images.shape[0] == 20
+
+    attack = Attack(model=model, **attack_kwargs)
+
+    fig, axs = plt.subplots(4, 11, figsize=(15, 8))
+
+    # Plot model predictions on clean images
+    for i in range(4):
+        for j in range(5):
+            image = images[5 * i + j]
+            label = labels[5 * i + j]
+            ax = axs[i, j]
+            ax.imshow(tf.squeeze(image), cmap="gray")
+            ax.axis("off")
+
+            prediction = model(tf.expand_dims(image, axis=0))
+            prediction = tf.math.argmax(prediction, axis=1)
+            prediction = tf.squeeze(prediction)
+            color = "green" if prediction.numpy() == label.numpy() else "red"
+
+            ax.set_title("Pred: " + str(prediction.numpy()),
+                         color=color, fontsize=18)
+    # Plot empty column
+    for i in range(4):
+        axs[i, 5].axis("off")
+
+    # Set attack inputs
+    if attack.name in ["Iterative Least Likely (Iter 1.1)",
+                       "One Step Least Likely (Step 1.1)"]:
+        attack_inputs = (images,)
+    else:
+        attack_inputs = (images, labels)
+
+    # Get adversarial examples
+    adv_examples = attack(*attack_inputs)
+
+    # Plot model predictions on adversarial examples
+    for i in range(4):
+        for j in range(5):
+            image = adv_examples[5 * i + j]
+            label = labels[5 * i + j]
+            ax = axs[i, 6 + j]
+            ax.imshow(tf.squeeze(image), cmap="gray")
+            ax.axis("off")
+
+            prediction = model(tf.expand_dims(image, axis=0))
+            prediction = tf.math.argmax(prediction, axis=1)
+            prediction = tf.squeeze(prediction)
+            color = "green" if prediction.numpy() == label.numpy() else "red"
+
+            ax.set_title("Pred: " + str(prediction.numpy()),
+                         color=color, fontsize=18)
+
+    # Plot text
+    plt.subplots_adjust(hspace=0.4)
+    plt.figtext(0.16, 0.93, "Model Prediction on Clean Images", fontsize=18)
+    plt.figtext(0.55, 0.93, "Model Prediction on Adversarial Examples", fontsize=18)
+    plt.figtext(0.1, 1, attack.specifics, fontsize=24, color="blue")

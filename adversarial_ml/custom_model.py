@@ -83,6 +83,13 @@ class CustomModel(tf.keras.Model):
         return {m.name: m.result() for m in self.metrics}
 
     def test_adv_robustness(self, test_images, test_labels, eps=0.3):
+        """
+        Prints accuracy on adversarial examples from all the adversarial attacks implemented in adversarial_attacks.py
+        :param test_images: tf.Tensor - shape (n,h,w,c) - images that will be transformed to adversarial examples
+        :param test_labels: tf.Tensor - shape (n,) - labels of test_images
+        :param eps: float number - maximum perturbation size for each adversarial attack
+        :return: Nothing
+        """
         assert (test_images.shape[0],) == test_labels.shape
         # Get list of adversarial attacks for test
         attack_list = [attacks.Fgsm, attacks.RandomPlusFgsm,
@@ -99,7 +106,7 @@ class CustomModel(tf.keras.Model):
 
         # Initialize adversarial attacks with parameters
         attack_list = [Attack(**params) for Attack, params in
-                   zip(attack_list, attack_params)]
+                    zip(attack_list, attack_params)]
 
         # Get inputs for attack in attacks
         attack_inputs = 3 * [(test_images, test_labels)] + 2 * [(test_images,)]
@@ -110,11 +117,15 @@ class CustomModel(tf.keras.Model):
         # Test adversarial robustnes
         print("Test adversarial robustness for model that was" + self.training_info)
         for attack, attack_input in zip(attack_list, attack_inputs):
+            # Get adversarial examples
             adv_examples = attack(*attack_input)
-            pred = self(adv_examples)
+            # Get predictions on adversarial examples
+            pred = super().__call__(adv_examples)
             pred = tf.math.argmax(pred, axis=1)
+            # Get accuracy on predictions
             equality = tf.math.equal(pred, tf.cast(test_labels, tf.int64))
             accuracy = tf.math.reduce_sum(tf.cast(equality, tf.float32)).numpy() / num_images
+            # Print accuracy
             print(100 * "=")
             print(attack.specifics + f" - accuracy: {accuracy}")
 
