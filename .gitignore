@@ -3,3 +3,5 @@
 
 .info
 .idea
+env/
+requirements.txt
