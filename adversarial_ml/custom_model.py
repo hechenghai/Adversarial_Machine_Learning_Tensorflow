@@ -68,7 +68,7 @@ class CustomModel(tf.keras.Model):
         # Track Gradients w.r.t weights
         with tf.GradientTape() as tape:
             # Forward pass
-            y_pred = self(x, training=True)
+            y_pred = super().__call__(x, training=True)
             # Compute the loss value
             loss = self.compiled_loss(y, y_pred, regularization_losses=self.losses)
 

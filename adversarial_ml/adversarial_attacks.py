@@ -279,4 +279,4 @@ def attack_visual_demo(model, Attack, attack_kwargs, images, labels):
     plt.subplots_adjust(hspace=0.4)
     plt.figtext(0.16, 0.93, "Model Prediction on Clean Images", fontsize=18)
     plt.figtext(0.55, 0.93, "Model Prediction on Adversarial Examples", fontsize=18)
-    plt.figtext(0.1, 1, attack.specifics, fontsize=24, color="blue")
+    plt.figtext(0.1, 1, "Adversarial Attack: "+attack.specifics, fontsize=24)

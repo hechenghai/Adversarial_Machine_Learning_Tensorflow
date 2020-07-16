@@ -33,15 +33,20 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 ## Demo
-The jupyter notbook `demo.ipynb` serves both as a tutorial on how to use the `adverarial_ml` package and adversarial machine learning in general. The demo evaluates different models (fully connected neural networks, convolution neural networks) with and without adversarial training on the adverarial attacks listed above. The dataset used in the experiments is `MNIST`. After the demo you should be able to see which adversarial attacks are the hardest to defend against, which type of adversarial examples is most effective for adversarial training and how the adversarial attacks differen in computational cost.
-The implementation should work for images of any dimension.
+The jupyter notbook `demo.ipynb` serves both as a tutorial on how to use the `adverarial_ml` package and adversarial
+machine learning in general. The demo evaluates different models (fully connected neural networks, convolution
+neural networks) with and without adversarial training on the adversarial attacks listed below. The dataset used in the
+experiments is `MNIST`. After the demo you should be able to see which adversarial attacks are the hardest to defend
+against, which type of adversarial examples is most effective for adversarial training and how the adversarial attacks
+differ in computational cost. Even though the demo works with the MNIST dataset,
+you should be able to use the `adversarial_ml` package for images with arbitrary channel dimension.
 
 ## List of attacks that were implemented
 
-- Fast Gradient Sign Method ([Explaining And Harnessing Adverarial Examples - Goodfellow et al](https://arxiv.org/pdf/1412.6572.pdf))
-- Step Least Likely ([Adverarial Machien Leanring at Scale - Kurakin et al.](https://arxiv.org/pdf/1611.01236.pdf))
-- Basic Iterative Method ([Adverarial Machien Leanring at Scale - Kurakin et al.](https://arxiv.org/pdf/1611.01236.pdf))
-- Iterative Least Likely ([Adverarial Machien Leanring at Scale - Kurakin et al.](https://arxiv.org/pdf/1611.01236.pdf))
+- Fast Gradient Sign Method ([Explaining And Harnessing Adversarial Examples - Goodfellow et al](https://arxiv.org/pdf/1412.6572.pdf))
+- Step Least Likely ([Adversarial Machine Learning at Scale - Kurakin et al.](https://arxiv.org/pdf/1611.01236.pdf))
+- Basic Iterative Method ([Adversarial Machine Learning at Scale - Kurakin et al.](https://arxiv.org/pdf/1611.01236.pdf))
+- Iterative Least Likely ([Adversarial Machine Learning at Scale - Kurakin et al.](https://arxiv.org/pdf/1611.01236.pdf))
 - Random Plus FGSM ([Fast Is Better Than Free: Revisiting Adversarial Training - Rice and Wong et al.](https://arxiv.org/pdf/2001.03994.pdf))
 
 ## Usage 
