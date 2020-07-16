@@ -29,6 +29,7 @@ class CustomModel(tf.keras.Model):
             # Asssert Attack is implemented attack from adversarial_attacks.py module
             Adv_attacks = [attacks.Fgsm, attacks.OneStepLeastLikely,
                            attacks.RandomPlusFgsm, attacks.BasicIter,
+                           attacks.PgdRandomRestart,
                            attacks.IterativeLeastLikely]
             assert Attack in Adv_attacks
             # Get hyperparameters of adversarial attack for trainining
@@ -92,15 +93,18 @@ class CustomModel(tf.keras.Model):
         """
         assert (test_images.shape[0],) == test_labels.shape
         # Get list of adversarial attacks for test
-        attack_list = [attacks.Fgsm, attacks.RandomPlusFgsm,
-                   attacks.BasicIter,
-                   attacks.IterativeLeastLikely,
-                   attacks.OneStepLeastLikely]
+        attack_list = [attacks.Fgsm,
+                       attacks.RandomPlusFgsm,
+                       attacks.BasicIter,
+                       attacks.PgdRandomRestart,
+                       attacks.IterativeLeastLikely,
+                       attacks.OneStepLeastLikely]
 
         # Get attack parameters
         attack_params = [{"model": self, "eps": eps},  # Fgsm kwargs
                          {"model": self, "eps": eps, "alpha": eps},  # Random Plus Fgsm kwargs
                          {"model": self, "eps": eps, "alpha": eps / 40, "num_iter": 40},  # Basic Iter kwargs
+                         {"model": self, "eps": eps, "alpha": eps / 40, "num_iter": 40, "restarts": 10}, #PgdRandomRestart kwargs
                          {"model": self, "eps": eps, "alpha": eps / 40, "num_iter": 40},  # IterativeLeastLikely kwargs
                          {"model": self, "eps": eps}]  # OneStepLeastLikely kwargs
 
@@ -109,7 +113,7 @@ class CustomModel(tf.keras.Model):
                     zip(attack_list, attack_params)]
 
         # Get inputs for attack in attacks
-        attack_inputs = 3 * [(test_images, test_labels)] + 2 * [(test_images,)]
+        attack_inputs = 4 * [(test_images, test_labels)] + 2 * [(test_images,)]
 
         # Get number of test images
         num_images = test_labels.shape[0]

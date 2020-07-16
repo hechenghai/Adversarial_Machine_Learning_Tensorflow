@@ -213,6 +213,90 @@ class RandomPlusFgsm(AdversarialAttack):
         return X
 
 
+class PgdRandomRestart(AdversarialAttack):
+    def __init__(self, model, eps, alpha, num_iter, restarts):
+        """
+        :param model: instance of tf.keras.Model that is used to generate adversarial examples
+        :param eps: float number - maximum perturbation size for adversarial attack
+        :param alpha: float number - step size in adversarial attack
+        :param num_iter: integer - number of iterations of pgd during one restart iteration
+        :param restarts: integer - number of restarts
+        """
+        super().__init__(model, eps)
+        self.name = "PGD With Random Restarts"
+        self.specifics = "PGD With Random Restarts - " \
+                         f"eps: {eps} - alpha: {alpha} - " \
+                         f"num_iter: {num_iter} - restarts: {restarts}"
+        self.alpha = alpha
+        self.num_iter = num_iter
+        self.restarts = restarts
+
+    def __call__(self, clean_images, true_labels):
+        """
+        :param clean_images: tf.Tensor - shape (n,h,w,c) - clean images will be transformed into adversarial examples
+        :param true_labels: tf.Tensor- shape (n,) - true labels of clean_images
+        :return: adversarial examples generated with PGD with random restarts
+        """
+        # Get loss on clean_images
+        max_loss = tf.keras.losses.SparseCategoricalCrossentropy(
+            reduction=tf.keras.losses.Reduction.NONE)(true_labels, self.model(clean_images))
+        # max_X contains adversarial examples and is updated after each restart
+        max_X = clean_images[:, :, :, :]
+
+        # Start restart loop
+        for i in tf.range(self.restarts):
+            # Get random perturbation uniformly in l infinity epsilon ball
+            random_delta = 2 * self.eps * tf.random.uniform(shape=clean_images.shape) - self.eps
+            # Add random perturbation
+            X = clean_images + random_delta
+
+            # Start projective gradient descent from X
+            for j in tf.range(self.num_iter):
+                # Track gradients
+                with tf.GradientTape(watch_accessed_variables=False) as tape:
+                    # Only gradients w.r.t. X are taken NOT model parameters
+                    tape.watch(X)
+                    pred = self.model(X)
+                    loss = self.loss_obj(true_labels, pred)
+
+                # Get gradients of loss w.r.t X
+                gradients = tape.gradient(loss, X)
+                # Compute perturbation as step size times sign of gradients
+                perturbation = self.alpha * tf.sign(gradients)
+                # Update X by adding perturbation
+                X = X + perturbation
+                # Make sure X did not leave L infinity epsilon ball around clean_images
+                X = tf.clip_by_value(X, clean_images - self.eps, clean_images + self.eps)
+                # Make sure X has entries between 0 and 1
+                X = tf.clip_by_value(X, 0, 1)
+
+            # Get crossentroby loss for each image in X
+            loss_vector = tf.keras.losses.SparseCategoricalCrossentropy(
+                reduction=tf.keras.losses.Reduction.NONE)(true_labels, self.model(X))
+
+            # mask is 1D tensor where true values are the rows of images that have higher loss than previous restarts
+            mask = tf.greater(loss_vector, max_loss)
+            # Update max_loss
+            max_loss = tf.where(mask, loss_vector, max_loss)
+            """
+            we cannot do max_X[mask] = X[mask] like in numpy. We need mask that fits shape of max_X.
+            Keep in mind that we want to select the rows that are True in the 1D tensor mask.
+            We can simply stack the mask along the dimensions of max_X to select each desired row later.
+            """
+            # Create 2D mask of shape (max_X.shape[0],max_X.shape[1])
+            multi_mask = tf.stack(max_X.shape[1] * [mask], axis=-1)
+            # Create 3D mask of shape (max_X.shape[0],max_X.shape[1], max_X.shape[2])
+            multi_mask = tf.stack(max_X.shape[2] * [multi_mask], axis=-1)
+            # Create 4D mask of shape (max_X.shape[0],max_X.shape[1], max_X.shape[2], max_X.shape[3])
+            multi_mask = tf.stack(max_X.shape[3] * [multi_mask], axis=-1)
+
+            # Replace adversarial examples max_X[i] that have smaller loss than X[i] with X[i]
+            max_X = tf.where(multi_mask, X, max_X)
+
+        # return adversarial examples
+        return max_X
+
+
 def attack_visual_demo(model, Attack, attack_kwargs, images, labels):
     """ Demo of adversarial attack on 20 images, visualizes adversarial robustness on 20 images
     :param model: tf,keras.Model
