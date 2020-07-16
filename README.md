@@ -1,8 +1,37 @@
 # Adversarial Machine Learning With Tensorflow
-In this repo you will find a custom tensorlfow implementation of various *adversarial attacks* and *adversarial training*. The repos consists of a pyhton package `adverarial_ml` and a demo jupyter notebook `demo.ipynb`. The python packages has two python modules: (1) `adverarial_attacks.py`which implements the adversarial attacks (2) `custom_model.py` which implements a subclass of `tf.keras.Model` which features an adversarial training option. 
+In this repo you can find a custom tensorlfow implementation of various *adversarial attacks* and *adversarial training*.
+The repo consists of a python package `adverarial_ml` and a jupyter notebook demo in `demo.ipynb`.
+The python package has two python modules: (1) `adverarial_attacks.py`which implements the adversarial attacks (2)
+`custom_model.py` which implements a subclass of `tf.keras.Model` featuring an adversarial training option. 
 
-## Installation
+## Who Is This For
+This repository may be useful or intersting for you if
+- you are looking for an implementation of adversarial attacks or the adversarial
+training algorithm (see `adversarial_ml` package)
+- interested in seeing adversarial attack and defense 
+results on MNIST (see `demo.ipynb`)
 
+## Getting Started
+First create your directory for the project and navigate into the directory.
+
+```commandline
+mkdir project
+cd project
+```
+
+Then you can clone the repository into the directory.
+
+```commandline
+git clone https://github.com/skmda37/Adversarial_Machine_Learning_Tensorflow.git
+```
+Finally create a virtual environment `env` with pip and install the requirements
+in `requirements.txt` with pip.
+
+```commandline
+pip venv env                
+source env/bin/activate
+pip install -r requirements.txt
+```
 ## Demo
 The jupyter notbook `demo.ipynb` serves both as a tutorial on how to use the `adverarial_ml` package and adversarial machine learning in general. The demo evaluates different models (fully connected neural networks, convolution neural networks) with and without adversarial training on the adverarial attacks listed above. The dataset used in the experiments is `MNIST`. After the demo you should be able to see which adversarial attacks are the hardest to defend against, which type of adversarial examples is most effective for adversarial training and how the adversarial attacks differen in computational cost.
 The implementation should work for images of any dimension.
@@ -112,7 +141,3 @@ Notice that the training procedure calls `.compile()`, `.fit()`  and `.evaluate(
 our model is specified by the Subclass API. To evaluate the adversarial robustness we call `.test_adv_robustness()`
 which will print out accuracies on adversarial examples generated from `(x_test,y_test)` for all the adversarial attacks
 implemented in the module `adversarial_attacks.py`.
-
-## Requirements
-The only packages needed are `tensorflow==2.2.0` as well as `matplotlib` and `numpy`.
-I used a conda environment which you can find in `environment.yml`.

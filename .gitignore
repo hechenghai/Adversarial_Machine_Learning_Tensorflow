@@ -5,3 +5,4 @@
 .idea
 env/
 requirements.txt
+environment.yml
