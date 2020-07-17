@@ -104,7 +104,7 @@ class CustomModel(tf.keras.Model):
         attack_params = [{"model": self, "eps": eps},  # Fgsm kwargs
                          {"model": self, "eps": eps, "alpha": eps},  # Random Plus Fgsm kwargs
                          {"model": self, "eps": eps, "alpha": eps / 40, "num_iter": 40},  # Basic Iter kwargs
-                         {"model": self, "eps": eps, "alpha": eps / 40, "num_iter": 40, "restarts": 10}, #PgdRandomRestart kwargs
+                         {"model": self, "eps": eps, "alpha": eps / 40, "num_iter": 40, "restarts": 4}, #PgdRandomRestart kwargs
                          {"model": self, "eps": eps, "alpha": eps / 40, "num_iter": 40},  # IterativeLeastLikely kwargs
                          {"model": self, "eps": eps}]  # OneStepLeastLikely kwargs
 
