@@ -123,13 +123,13 @@ OPTIMIZER = tf.keras.optimizers.RMSprop()
 my_model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=["accuracy"])
 
 # Fit model to training data 
-my_model.fit(x_train, y_train, batch_size=32, epochs=4, valiadation_split=0.2)
+my_model.fit(x_train, y_train, batch_size=32, epochs=2, valiadation_split=0.2)
 
 # Evaluate model on test data
 print("\n")
 evaluation = my_model.evaluate(x_test,y_test, verbose=2)
 ```
-![][]
+![trainining progress]()
 
 Lastly we would like to perform an adversarial robustness test. For fun's sake we can
 also visualize how `my_model` performs on 20 adversarial examples for the most powerful attack *PGD With Random Restarts*. I implemented a method
@@ -144,9 +144,8 @@ attack_kwargs = {"eps": 0.25, "alpha": 0.25/40, "num_iter": 40, "restarts": 10}
 attacks.attack_visual_demo(my_model, Attack, attack_kwargs,
                            x_test[:20], y_test[:20])
 ```
-After running the last code snippet in a jupyter notebook cell you would get this plot:
-
 ![attack visualization](https://github.com/skmda37/Adversarial_Machine_Learning_Tensorflow/blob/master/images/attack_visualization.png)
+As you can see the model is fooled at a very high rate even though it was trained on adversarial examples (of type Random Plus Fgsm).
 
 Lastly let us perform a rigorous adversarial robustness test. This is easy since every instance of `models.CustomModel` has 
 a built in method `test_adv_robustness` which prints accuracy results on adversarial attacks with test data for each attack implemented
@@ -156,7 +155,4 @@ The iterative methods are computationally expensive in particular the *PGD with 
 ```pyhton
 my_model.test_adv_robustness(x_test, y_test, eps=0.3)
 ```
-
-The result could look like this:
-
-![][]
+![adversarial robustness test]()
