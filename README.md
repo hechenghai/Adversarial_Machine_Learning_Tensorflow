@@ -144,7 +144,7 @@ attack_kwargs = {"eps": 0.25, "alpha": 0.25/40, "num_iter": 40, "restarts": 10}
 attacks.attack_visual_demo(my_model, Attack, attack_kwargs,
                            x_test[:20], y_test[:20])
 ```
-After running this code in a jupyter notebook cell yo would get this plot:
+After running the last code snippet in a jupyter notebook cell you would get this plot:
 
 ![attack visualization](https://github.com/skmda37/Adversarial_Machine_Learning_Tensorflow/blob/master/images/attack_visualization.png)
 
