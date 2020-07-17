@@ -129,7 +129,7 @@ my_model.fit(x_train, y_train, batch_size=32, epochs=2, valiadation_split=0.2)
 print("\n")
 evaluation = my_model.evaluate(x_test,y_test, verbose=2)
 ```
-![trainining progress]()
+![trainining progress](https://github.com/skmda37/Adversarial_Machine_Learning_Tensorflow/blob/master/images/training_progress.png)
 
 Lastly we would like to perform an adversarial robustness test. For fun's sake we can
 also visualize how `my_model` performs on 20 adversarial examples for the most powerful attack *PGD With Random Restarts*. I implemented a method
@@ -149,10 +149,10 @@ As you can see the model is fooled at a very high rate even though it was traine
 
 Lastly let us perform a rigorous adversarial robustness test. This is easy since every instance of `models.CustomModel` has 
 a built in method `test_adv_robustness` which prints accuracy results on adversarial attacks with test data for each attack implemented
-in `adversarial_attacks.py`. If your computational resources are limited you may want to test ona smaller number of test data like `x_test[:100], y_test[:100]`.
+in `adversarial_attacks.py`. If your computational resources are limited you may want to test on a smaller number of test data like `x_test[:100], y_test[:100]`.
 The iterative methods are computationally expensive in particular the *PGD with random restarts* attack.
 
 ```pyhton
-my_model.test_adv_robustness(x_test, y_test, eps=0.3)
+my_model.test_adv_robustness(x_test[:100], y_test[:100], eps=0.3)
 ```
-![adversarial robustness test]()
+![adversarial robustness test](https://github.com/skmda37/Adversarial_Machine_Learning_Tensorflow/blob/master/images/robustness_test.png)
