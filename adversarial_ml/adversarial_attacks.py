@@ -52,7 +52,7 @@ class OneStepLeastLikely(AdversarialAttack):
         """
         super().__init__(model, eps)
         self.name = "One Step Least Likely (Step 1.1)"
-        self.specifics = "One Step Least Likely (Step 1.1) - eps: {:.2f}".format(eps)
+        self.specifics = "One Step Least Likely (Step L.L) - eps: {:.2f}".format(eps)
 
     def __call__(self, clean_images):
         """
@@ -136,7 +136,7 @@ class IterativeLeastLikely(AdversarialAttack):
         self.alpha = alpha
         self.num_iter = num_iter
         self.name = "Iterative Least Likely (Iter 1.1)"
-        self.specifics = "Iterative Least Likely (Iter 1.1) " \
+        self.specifics = "Iterative Least Likely (Iter L.L) " \
                          "- eps: {:.2f} - alpha: {:.4f} " \
                          "- num_iter: {:d}".format(eps, alpha, num_iter)
 
