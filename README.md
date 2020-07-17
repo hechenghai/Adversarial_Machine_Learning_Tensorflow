@@ -146,7 +146,7 @@ attacks.attack_visual_demo(my_model, Attack, attack_kwargs,
 ```
 After running this code in a jupyter notebook cell yo would get this plot:
 
-![attack visualization](images/attack_visulization.png)
+![attack visualization](https://github.com/skmda37/Adversarial_Machine_Learning_Tensorflow/blob/master/images/attack_visualization.png)
 
 Lastly let us perform a rigorous adversarial robustness test. This is easy since every instance of `models.CustomModel` has 
 a built in method `test_adv_robustness` which prints accuracy results on adversarial attacks with test data for each attack implemented
