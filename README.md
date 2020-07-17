@@ -48,101 +48,115 @@ you should be able to use the `adversarial_ml` package for images with arbitrary
 - Basic Iterative Method ([Adversarial Machine Learning at Scale - Kurakin et al.](https://arxiv.org/pdf/1611.01236.pdf))
 - Iterative Least Likely ([Adversarial Machine Learning at Scale - Kurakin et al.](https://arxiv.org/pdf/1611.01236.pdf))
 - Random Plus FGSM ([Fast Is Better Than Free: Revisiting Adversarial Training - Rice and Wong et al.](https://arxiv.org/pdf/2001.03994.pdf))
+- PGD With Random Restarts ([https://arxiv.org/pdf/1706.06083.pdf](https://arxiv.org/pdf/1706.06083.pdf))
 
 ## Usage 
-Each adversarial attack is implemented as a class in `adversarial_attacks.py`.
-To illustrate how a specific adversarial attack is  used we take
-*Random Plus FGSM* attack as an examples.
-Let's import the module `adaversarial_attacks.py` to use the attack:
+
+Each adversarial attack is implemented as a class in `adversarial_attacks.py`. 
+The module `custom_model.py` defines the class `CustomModel` which is a subclass to `tf.keras,Model`. 
+
+Let's import the modules and demonstrate how to adversarially train a model (using the Random Plus FGSM attack as an example) and 
+evalaute the adversarial robustness.
 
 ```python
 from adversarial_ml import adversarial_attacks.py as attacks
-```
-
-You initialize the attack by passing the `model` which is attacked and the hyperparameters 
-of the attack `eps` (maximum perturbation) and `alpha` (step size):
-
-```python
-# eps and alpha are float numbers - model is instance of tf.keras.Model
-random_plus_fgsm = attacks.RandomPlusFgsm(model=model, eps=esp, alpha=alpha)
-```
-
-You can then generate adversarial examples by calling the attack object. It needs as input `clean_images` (images that will be transformed to adversarial examples) and `true_labels` (the true labels of `clean_images`):
-
-```python
-# clean_images and true_labels are tf.Tensor of shape (n,h,w,c) and (n,) respectively
-adv_examples = random_plus_fgsm(clean_images=clean_images, true_labels=true_labels) # adv_examples.shape = (n,h,w,c)
-```
-
-
-## The implementation of adversarial training
-The module `custom_model.py` defines the class `CustomModel` which is a subclass to `tf.keras,Model`.  
-Let's import the module `custom_model.py` and show how it can be used:
-
-```python
 from adversarial_ml import custom_model as models
 ```
 
-Next we will initialize a simple model `model_A` that will be trained *without* adversarial training:
+Let's load the MNIST dataset for the demonstration.
 ```python
-# Define forward call for model
-inputs = tf.keras.Input(shape=[28,28,1], dtype=tf.float32, name="image")
-x = inputs
-x = tf.keras.layers.Dense(60, activation='relu')(x)
-outputs = tf.keras.layers.Dense(hparams.num_classes, activation='softmax')(x)
+(x_train,y_train), (x_test,y_test) = tf.keras.datasets.mnist.load_data()
 
-# Get model
-model_A = models.CustomModel(inputs= inputs, outputs=outputs, adv_training_with=None)
+# Preprocess
+x_train = tf.constant(x_train.reshape(60000,28, 28,1).astype("float32") / 255)
+x_test = tf.constant(x_test.reshape(10000, 28, 28, 1).astype("float32") / 255)
+
+y_train = tf.constant(y_train.astype("float32"))
+y_test = tf.constant(y_test.astype("float32"))
 ```
-
-Now say you would like to compare this model to another `model_B` of the same architecture that will be trained
-*with* adversarial training using the FGSM  with `eps = 0.3` to generate adversarial examples:
+Next let's define a convolutional neural network that we can adversarially train on MNIST.
 
 ```python
-# Define adversarial training parameters
+# Get adversarial training parameters
 eps = 0.3
-attack_kwargs = {"eps": eps}
-adv_training_with = {"attack": attacks.Fgsm,         # Type of attack used for adversarial examples in training batch
-                     "attack kwargs": attack_kwargs, # Parameter for adversarial attack
-                     "num adv": 16}                  # Number of adversarial examples in training batch
+attack_kwargs = {"eps": eps, "alpha":1.25*eps}
+adv_training_with = {"attack": attacks.RandomPlusFgsm,
+                     "attack kwargs": attack_kwargs,
+                     "num adv": 16}
 
-# Define forward call for model
-inputs = tf.keras.Input(shape=[28,28,1], dtype=tf.float32, name="image")
+# Define forward pass
+inputs = tf.keras.Input(shape=[28,28,1]
+                            dtype=tf.float32, name="image")
 x = inputs
-x = tf.keras.layers.Dense(60, activation='relu')(x)
-outputs = tf.keras.layers.Dense(hparams.num_classes, activation='softmax')(x)
+x = tf.keras.layers.GaussianNoise(stddev=0.2)(x)
+
+# Convolutional layer followed by 
+for i, num_filters in enumerate([32,64,64):
+x = tf.keras.layers.Conv2D(
+    num_filters, (3,3), activation='relu')(x)
+if i < len([32,64,64) - 1:
+    # max pooling between convolutional layers
+    x = tf.keras.layers.MaxPooling2D((2,2))(x)
+
+x = tf.keras.layers.Flatten()(x)
+
+for num_units in [64]:
+   x = tf.keras.layers.Dense(num_units, activation='relu')(x)
+   
+pred = tf.keras.layers.Dense(10, activation='softmax')(x)
 
 # Get model
-model_A = models.CustomModel(inputs= inputs, outputs=outputs,
-                             adv_training_with=adv_training_with)
+my_model = models.CustomModel(inputs=inputs, outputs=pred, 
+                              adv_training_with=adv_training_with)
 ```
 
-Finally we want to train both models on training data `(x_train, y_train)` and evaluate the adversarial robustness
-of both models on test data `(x_test,y_test)`:
+Now we want to train `my_model` adversarially. We just do thhis as we would do with any `tf.keras.Model` and it will train using
+adversarial training with all the hyperparmeters passed in `adv_training_with`.
 
 ```python
-# Define training specifics
-loss = tf.keras.losses.SparseCategoricalCrossentropy()
-metrics = [tf.keras.metrics.SparseCategoricalAccuracy]
-optimizer = tf.keras.optimizers.RMSprop()
-EPOCHS = 4
+# Training parameters
+LOSS = tf.keras.losses.SparseCategoricalCrossentropy()
+METRICS = [tf.keras.metrics.SparseCategoricalAccuracy]
+OPTIMIZER = tf.keras.optimizers.RMSprop()
 
 # Compile model
-for model in [model_A, model_B]:
-    model.compile(optimizer=optimizer,
-                  loss=loss, metrics=["accuracy"])
-    model.fit(x_train, y_train,
-                       batch_size=32,epochs=EPOCHS,
-                       validation_split=0.2)
-    # Evaluate model
-    print("\n")
-    evaluation = model.evaluate(x_test,y_test, verbose=2)
-    
-    # Test adversarial robustness
-    print("\n")
-    model.test_adv_robustness(x_test, y_test)
+my_model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=["accuracy"])
+
+# Fit model to training data 
+my_model.fit(x_train, y_train, batch_size=32, epochs=4, valiadation_split=0.2)
+
+# Evaluate model on test data
+print("\n")
+evaluation = my_model.evaluate(x_test,y_test, verbose=2)
 ```
-Notice that the training procedure calls `.compile()`, `.fit()`  and `.evaluate()` like any tf.keras.Model would since 
-our model is specified by the Subclass API. To evaluate the adversarial robustness we call `.test_adv_robustness()`
-which will print out accuracies on adversarial examples generated from `(x_test,y_test)` for all the adversarial attacks
-implemented in the module `adversarial_attacks.py`.
+![][]
+
+Lastly we would like to perform an adversarial robustness test. For fun's sake we can
+also visualize how `my_model` performs on 20 adversarial examples for the most powerful attack *PGD With Random Restarts*. I implemented a method
+`attacks.attacks_visual_demo` which does that. This test is informal and just a visulaization to see what's going on.
+
+```python
+# Attack to be tested
+Attack = attacks.PgdRandomRestart
+# Attack parameters
+attack_kwargs = {"eps": 0.25, "alpha": 0.25/40, "num_iter": 40, "restarts": 10}
+
+attacks.attack_visual_demo(my_model, Attack, attack_kwargs,
+                           x_test[:20], y_test[:20])
+```
+After running this code in a jupyter notebook cell yo would get this plot:
+
+![attack visualization]["images/attack_visulization.png"]
+
+Lastly let us perform a rigorous adversarial robustness test. This is easy since every instance of `models.CustomModel` has 
+a built in method `test_adv_robustness` which prints accuracy results on adversarial attacks with test data for each attack implemented
+in `adversarial_attacks.py`. If your computational resources are limited you may want to test ona smaller number of test data like `x_test[:100], y_test[:100]`.
+The iterative methods are computationally expensive in particular the *PGD with random restarts* attack.
+
+```pyhton
+my_model.test_adv_robustness(x_test, y_test, eps=0.3)
+```
+
+The result could look like this:
+
+![][]
