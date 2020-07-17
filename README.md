@@ -1,11 +1,11 @@
 # Adversarial Machine Learning With Tensorflow
-In this repo you can find a custom tensorlfow implementation of various *adversarial attacks* and *adversarial training*.
-The repo consists of a python package `adverarial_ml` and a jupyter notebook demo in `demo.ipynb`.
-The python package has two python modules: (1) `adverarial_attacks.py`which implements the adversarial attacks (2)
+In this repo you can find a custom tensorflow implementation of various *adversarial attacks* and *adversarial training*  variants.
+This repository includes of a python package `adverarial_ml` and a jupyter notebook demo in `demo.ipynb`.
+The python package has two python modules: (1) `adverarial_attacks.py` which implements the adversarial attacks (2)
 `custom_model.py` which implements a subclass of `tf.keras.Model` featuring an adversarial training option. 
 
 ## Who Is This For
-This repository may be useful or intersting for you if
+This repository may be useful or intersting to you if
 - you are looking for an implementation of adversarial attacks or the adversarial
 training algorithm (see `adversarial_ml` package)
 - interested in seeing adversarial attack and defense 
@@ -34,11 +34,9 @@ pip install -r requirements.txt
 ```
 ## Demo
 The jupyter notbook `demo.ipynb` serves both as a tutorial on how to use the `adverarial_ml` package and adversarial
-machine learning in general. The demo evaluates different models (fully connected neural networks, convolution
-neural networks) with and without adversarial training on the adversarial attacks listed below. The dataset used in the
-experiments is `MNIST`. After the demo you should be able to see which adversarial attacks are the hardest to defend
-against, which type of adversarial examples is most effective for adversarial training and how the adversarial attacks
-differ in computational cost. Even though the demo works with the MNIST dataset,
+training in practice on MNIST. The demo evaluates different models (fully connected neural networks, convolution
+neural networks) with and without adversarial training on the adversarial attacks listed below. After the demo you should be able to see which adversarial attacks are the hardest to defend against, which type of adversarial examples is most effective to train on in terms of defense and how the adversarial attacks
+differ in computational cost. Even though the demo uses the MNIST dataset,
 you should be able to use the `adversarial_ml` package for images with arbitrary channel dimension.
 
 ## List of attacks that were implemented
@@ -55,15 +53,17 @@ you should be able to use the `adversarial_ml` package for images with arbitrary
 Each adversarial attack is implemented as a class in `adversarial_attacks.py`. 
 The module `custom_model.py` defines the class `CustomModel` which is a subclass to `tf.keras,Model`. 
 
-Let's import the modules and demonstrate how to adversarially train a model (using the Random Plus FGSM attack as an example) and 
-evalaute the adversarial robustness.
+Let's import the modules and demonstrate how to adversarially train a model (on adversarial examples generated with Random Plus FGSM attack as an example) and 
+evaluate the adversarial robustness of the model.
 
 ```python
+import tensorflow as tf
+
 from adversarial_ml import adversarial_attacks.py as attacks
 from adversarial_ml import custom_model as models
 ```
 
-Let's load the MNIST dataset for the demonstration.
+Let's load the MNIST dataset.
 ```python
 (x_train,y_train), (x_test,y_test) = tf.keras.datasets.mnist.load_data()
 
@@ -110,11 +110,11 @@ my_model = models.CustomModel(inputs=inputs, outputs=pred,
                               adv_training_with=adv_training_with)
 ```
 
-Now we want to train `my_model` adversarially. We just do thhis as we would do with any `tf.keras.Model` and it will train using
+Now we want to train `my_model` adversarially. We just do this as we would do with any `tf.keras.Model` and it will train using
 adversarial training with all the hyperparmeters passed in `adv_training_with`.
 
 ```python
-# Training parameters
+# Standard training parameters
 LOSS = tf.keras.losses.SparseCategoricalCrossentropy()
 METRICS = [tf.keras.metrics.SparseCategoricalAccuracy]
 OPTIMIZER = tf.keras.optimizers.RMSprop()
@@ -123,11 +123,11 @@ OPTIMIZER = tf.keras.optimizers.RMSprop()
 my_model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=["accuracy"])
 
 # Fit model to training data 
-my_model.fit(x_train, y_train, batch_size=32, epochs=2, valiadation_split=0.2)
+my_model.fit(x_train, y_train, batch_size=32, epochs=2, validation_split=0.2)
 
 # Evaluate model on test data
 print("\n")
-evaluation = my_model.evaluate(x_test,y_test, verbose=2)
+evaluation = my_model.evaluate(x_test, y_test, verbose=2)
 ```
 ![trainining progress](https://github.com/skmda37/Adversarial_Machine_Learning_Tensorflow/blob/master/images/training_progress.png)
 
@@ -145,12 +145,13 @@ attacks.attack_visual_demo(my_model, Attack, attack_kwargs,
                            x_test[:20], y_test[:20])
 ```
 ![attack visualization](https://github.com/skmda37/Adversarial_Machine_Learning_Tensorflow/blob/master/images/attack_visualization.png)
+
 As you can see the model is fooled at a very high rate even though it was trained on adversarial examples (of type Random Plus Fgsm).
 
 Lastly let us perform a rigorous adversarial robustness test. This is easy since every instance of `models.CustomModel` has 
-a built in method `test_adv_robustness` which prints accuracy results on adversarial attacks with test data for each attack implemented
+a built in method `test_adv_robustness` which prints accuracy results on adversarial attacks on the test data for each attack implemented
 in `adversarial_attacks.py`. If your computational resources are limited you may want to test on a smaller number of test data like `x_test[:100], y_test[:100]`.
-The iterative methods are computationally expensive in particular the *PGD with random restarts* attack.
+Especially the iterative methods are computationally expensive in particular the *PGD with random restarts* attack if many restarts are used.
 
 ```pyhton
 my_model.test_adv_robustness(x_test[:100], y_test[:100], eps=0.3)
