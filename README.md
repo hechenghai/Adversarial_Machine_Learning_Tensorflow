@@ -28,7 +28,7 @@ Finally create a virtual environment `env` with pip and install the requirements
 in `requirements.txt` with pip.
 
 ```commandline
-pip venv env                
+pip -m venv env                
 source env/bin/activate
 pip install -r requirements.txt
 ```
