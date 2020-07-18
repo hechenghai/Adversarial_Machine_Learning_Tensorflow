@@ -25,11 +25,12 @@ Then you can clone the repository into the directory.
 git clone https://github.com/skmda37/Adversarial_Machine_Learning_Tensorflow.git
 ```
 Finally create a virtual environment `env` with pip and install the requirements
-in `requirements.txt` with pip.
+in `requirements.txt` with pip. On macOS or Linux you can do
 
 ```commandline
-pip -m venv env                
+python3 -m venv env                
 source env/bin/activate
+cd Adversarial_Machine_Learning_Tensorflow
 pip install -r requirements.txt
 ```
 ## Demo
